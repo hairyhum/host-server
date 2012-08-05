@@ -1,0 +1,22 @@
+{application, todo,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { todo_app, []}},
+  {env, [
+		{doc_root, "/home/user/todo/www"},
+		{ip, {0,0,0,0}},
+		{port, 7000},
+		{server_name, "localhost"},
+
+		{dbhost, "localhost"},
+		{dbuser, "todo"},
+		{dbpass, "123"},
+		{dbname, "todo"}
+	]}
+ ]}.
