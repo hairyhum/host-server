@@ -13,7 +13,8 @@ read(Record) ->
     end,
     mnesia:transaction(F).
 
-save(Record, Action) when (Action == update) or (Action == insert)  ->
+save(Rec, Action) when (Action == update) or (Action == insert)  ->
+    Record = transformations:transform(Rec),
     RecordName = element(1, Record),
     F = fun() ->
         mnesia:write_table_lock(RecordName),

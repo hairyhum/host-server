@@ -1,12 +1,12 @@
--module(entiry).
+-module(entity).
 
 -include("tables.hrl").
 
 -export([fields/1]).
 
-fields(#todo_entity{id = Id}) ->
+fields(Entity) ->
     Tr = fun() ->
-        mnesia:read(todo_field, Id)
+        mnesia:read(todo_field, Entity)
     end,
     Fields = mnesia:transaction(Tr),
     read_clocks(Fields).

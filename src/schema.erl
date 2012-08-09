@@ -15,7 +15,7 @@ install(Nodes) ->
             {disc_copies, Nodes}]),
     mnesia:create_table(todo_device,
         [{attributes, record_info(fields, todo_device)},
-            {index, [#todo_device.token]},
+            {index, [#todo_device.login]},
             {disc_copies, Nodes},
             {type, bag}]),
     mnesia:create_table(todo_entity,

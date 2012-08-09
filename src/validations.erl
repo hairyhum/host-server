@@ -9,6 +9,6 @@ validate(Item = #todo_user{}, insert) ->
     ok;
 validate(Item = #todo_user{}, update) ->
     ok;
-validate(_) ->
+validate(_,_) ->
     ok.
 
