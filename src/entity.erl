@@ -2,7 +2,7 @@
 
 -include("tables.hrl").
 
--export([fields/1]).
+-export([fields/1, consistent/2]).
 
 fields(Entity) ->
     Tr = fun() ->
@@ -20,6 +20,14 @@ read_clocks(Fields) ->
     end,
     lists:map(GetClocks, Fields).
 
+
+consistent(Entity, MergeFields) ->
+    case lists:filter(fun(Field) -> Field /= ok end, MergeFields) of
+        [] ->
+           ;
+        MergeErrors ->
+            {conflict, ok, MergeErrors}
+    end.
 
 
 

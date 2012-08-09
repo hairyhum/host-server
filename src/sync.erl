@@ -2,7 +2,7 @@
 
 -include("tables.hrl").
 
--export([]).
+-export([sync/3]).
 
 sync(User, Token, Data) ->
     Lock = {sync, self()},
@@ -26,25 +26,28 @@ sync_item({Id, []}, _) ->
     {Id, ok, []};
 sync_item({Id, Fields}, Device) ->
     MergedFields = lists:map(
-        fun(Field) ->
-            sync_field(Field, Device)
+        fun(Field#todo_field{entity = Entity}) ->
+            OldState = data:read(#todo_field{entity = Entity}),
+            sync_field(Field, OldState, Device)
         end,
         Fields),
-    MergeErrors = lists:filter(
-        fun
-        ({error, _}) -> true;
-        ({ok, _}) -> false
-        end,
-        MergedFields
-    ),
-    Valid = if
-        MergeErrors == [] ->
-            Login = Device#todo_device.login,
-            entity:consistent(#todo_entity{login = Login, id = Id}, MergedFields);
-        true -> ok
-    end,
-    {Id, Valid, MergeErrors}.
+    Login = Device#todo_device.login,
+    case entity:consistent(#todo_entity{login = Login, id = Id}, MergedFields) of
+        ok ->
+           {Id, field:batch_save(Fields), []};
+        {conflict, Valid, MergeErrors} ->
+           {Id, Valid, MergeErrors}
+    end.
 
+sync_field(Field, [], _) ->
+    field:pretend(Field, insert);
+sync_field(Field#todo_field{clocks = Clocks}, [OldField#todo_field{clocks = OldClocks}], Device) ->
+    case updateble(OldClocks, Clocks, Device) of
+        ok ->
+            {field:pretend(Field, update), Field};
+        conflict ->
+            {conflict, OldField}
+    end.
 
 
 
