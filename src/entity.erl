@@ -2,7 +2,9 @@
 
 -include("tables.hrl").
 
--export([fields/1, consistent/2]).
+-export([fields/1, valid/2]).
+
+-define(ITEM_FIELDS, [a, b, c]).
 
 fields(Entity) ->
     Tr = fun() ->
@@ -21,13 +23,34 @@ read_clocks(Fields) ->
     lists:map(GetClocks, Fields).
 
 
-consistent(Entity, MergeFields) ->
-    case lists:filter(fun(Field) -> Field /= ok end, MergeFields) of
-        [] ->
-           ;
-        MergeErrors ->
-            {conflict, ok, MergeErrors}
-    end.
+
+valid(Entity, Fields = [#todo_field{name = "listName"}]) ->
+    valid_fields(Fields, list);
+valid(Entity, Fields) when length(Fields) == length(?ITEM_FIELDS) ->
+    if lists:map(
+        fun(Item) ->
+            Item#todo_field.name
+        end,
+        Fields) /= ?ITEM_FIELDS ->
+        {error, {fields, "invalid fields names"}};
+        true ->
+            valid_fields(Fields, item)
+    end;
+valid(_, _) ->
+    {error, {fields, "invalid fields count"}}.
+
+
+
+valid_fields([#todo_field{value = Value}], list) ->
+    if string:len(string:strip(Value)) == 0 ->
+        [{error, {value, "should not be empty"}}];
+        true -> ok
+    end;
+valid_fields(Fields, item) ->
+    ok.
+
+
+
 
 
 

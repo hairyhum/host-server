@@ -32,7 +32,13 @@ sync_item({Id, Fields}, Device) ->
         end,
         Fields),
     Login = Device#todo_device.login,
-    case entity:consistent(#todo_entity{login = Login, id = Id}, MergedFields) of
+    Consistent = case lists:filter(fun(Field) -> Field /= ok end, MergedFields) of
+        [] ->
+            entity:valid(Entity, MergedFields);
+        MergeErrors ->
+            {conflict, ok, MergeErrors}
+    end,
+    case Consistent of
         ok ->
            {Id, field:batch_save(Fields), []};
         {conflict, Valid, MergeErrors} ->
