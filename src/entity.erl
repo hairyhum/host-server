@@ -2,9 +2,10 @@
 
 -include("tables.hrl").
 
--export([fields/1, valid/2]).
+-export([fields/1, valid/1]).
 
--define(ITEM_FIELDS, [a, b, c]).
+-define(ITEM_FIELDS, [title, position, listId]).
+-defin(LIST_FIELDS, [listName, position]).
 
 fields(Entity) ->
     Tr = fun() ->
@@ -24,31 +25,42 @@ read_clocks(Fields) ->
 
 
 
-valid(Entity, Fields = [#todo_field{name = "listName"}]) ->
-    valid_fields(Fields, list);
-valid(Entity, Fields) when length(Fields) == length(?ITEM_FIELDS) ->
-    if lists:map(
-        fun(Item) ->
-            Item#todo_field.name
+valid(Fields) when field_names(Fields) /= ?ITEM_FIELDS, field_names(Fields) /= ?LIST_FIELDS ->
+    {errors, [{fields, "invalid fields"}]};
+valid(Fields) ->
+    fields_errors(Fields).
+
+
+fields_errors(Fields) ->
+    FieldsErrors = lists:map(
+        fun(#todo_field{name = Name, value = Value}) ->
+            field_error(Name, Value)
         end,
-        Fields) /= ?ITEM_FIELDS ->
-        {error, {fields, "invalid fields names"}};
+        Fields),
+    case lists:filter(
+        fun(ok) -> false;
+        (_) -> true
+        end,
+        FieldsErrors) of
+        [] -> ok;
+        Arr -> {errors, Arr}
+    end.
+
+
+field_error(Name, Value) when Name == listName; Name == title  ->
+    if
+        length(string:strip(Value)) /= 0 ->
+            ok;
         true ->
-            valid_fields(Fields, item)
+            {Name, "should not be empty"}
     end;
-valid(_, _) ->
-    {error, {fields, "invalid fields count"}}.
-
-
-
-valid_fields([#todo_field{value = Value}], list) ->
-    if string:len(string:strip(Value)) == 0 ->
-        [{error, {value, "should not be empty"}}];
-        true -> ok
-    end;
-valid_fields(Fields, item) ->
-    ok.
-
+field_error(position, Value) ->
+    if
+        is_float(Value) ->
+            ok;
+        true ->
+            {position, "should be float"}
+    end.
 
 
 
